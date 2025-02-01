@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,5 +80,15 @@ public interface FileAPI {
 			@RequestParam(name = "orderDirection", required = false, defaultValue = "DESC") Pagination.Order.Direction orderDirection,
 			@RequestParam(name = "filterOperator", required = false, defaultValue = "AND") Filter.Operator filterOperator,
 			@RequestParam(name = "filters", required = false) List<String> filters);
+
+	@DeleteMapping(value = "{id}")
+	@Operation(summary = "Delete file", description = "This method delete file", security = @SecurityRequirement(name = "bearerAuth"))
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Files deleted successfully", content = @Content(schema = @Schema(implementation = Void.class))),
+			@ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content(schema = @Schema(implementation = ApiError.class)))
+	})
+	ResponseEntity<Void> delete(
+			@PathVariable(required = true) UUID id,
+			@RequestParam(name = "force", required = false, defaultValue = "false") final boolean permanently);
 
 }

@@ -17,6 +17,10 @@ import com.callv2.drive.application.file.content.get.GetFileContentInput;
 import com.callv2.drive.application.file.content.get.GetFileContentOutput;
 import com.callv2.drive.application.file.content.get.GetFileContentUseCase;
 import com.callv2.drive.application.file.create.CreateFileUseCase;
+import com.callv2.drive.application.file.delete.DeleteFileInput;
+import com.callv2.drive.application.file.delete.DeleteFileUseCase;
+import com.callv2.drive.application.file.remove.RemoveFileInput;
+import com.callv2.drive.application.file.remove.RemoveFileUseCase;
 import com.callv2.drive.application.file.retrieve.get.GetFileInput;
 import com.callv2.drive.application.file.retrieve.get.GetFileUseCase;
 import com.callv2.drive.application.file.retrieve.list.ListFilesUseCase;
@@ -40,16 +44,22 @@ public class FileController implements FileAPI {
     private final GetFileUseCase getFileUseCase;
     private final GetFileContentUseCase getFileContentUseCase;
     private final ListFilesUseCase listFilesUseCase;
+    private final DeleteFileUseCase deleteFileUseCase;
+    private final RemoveFileUseCase removeFileUseCase;
 
     public FileController(
             final CreateFileUseCase createFileUseCase,
             final GetFileUseCase getFileUseCase,
             final GetFileContentUseCase getFileContentUseCase,
-            final ListFilesUseCase listFilesUseCase) {
+            final ListFilesUseCase listFilesUseCase,
+            final DeleteFileUseCase deleteFileUseCase,
+            final RemoveFileUseCase removeFileUseCase) {
         this.createFileUseCase = createFileUseCase;
         this.getFileUseCase = getFileUseCase;
         this.getFileContentUseCase = getFileContentUseCase;
         this.listFilesUseCase = listFilesUseCase;
+        this.deleteFileUseCase = deleteFileUseCase;
+        this.removeFileUseCase = removeFileUseCase;
     }
 
     @Override
@@ -104,6 +114,17 @@ public class FileController implements FileAPI {
                 searchFilters);
 
         return ResponseEntity.ok(listFilesUseCase.execute(query).map(FilePresenter::present));
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(UUID id, boolean permanently) {
+
+        if (permanently)
+            deleteFileUseCase.execute(DeleteFileInput.of(id));
+        else
+            removeFileUseCase.execute(RemoveFileInput.of(id));
+
+        return ResponseEntity.noContent().build();
     }
 
 }

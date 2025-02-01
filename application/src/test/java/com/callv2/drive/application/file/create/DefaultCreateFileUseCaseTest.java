@@ -42,406 +42,406 @@ import com.callv2.drive.domain.storage.StorageService;
 @ExtendWith(MockitoExtension.class)
 public class DefaultCreateFileUseCaseTest {
 
-        @InjectMocks
-        DefaultCreateFileUseCase useCase;
+    @InjectMocks
+    DefaultCreateFileUseCase useCase;
 
-        @Mock
-        MemberGateway memberGateway;
+    @Mock
+    MemberGateway memberGateway;
 
-        @Mock
-        FolderGateway folderGateway;
+    @Mock
+    FolderGateway folderGateway;
 
-        @Mock
-        StorageService storageService;
+    @Mock
+    StorageService storageService;
 
-        @Mock
-        FileGateway fileGateway;
+    @Mock
+    FileGateway fileGateway;
 
-        @Test
-        void givenAValidParams_whenCallsExecute_thenShouldCreateFile() {
+    @Test
+    void givenAValidParams_whenCallsExecute_thenShouldCreateFile() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
-                final var expectedFolderId = folder.getId();
+        final var folder = Folder.createRoot();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                when(memberGateway.findById(any()))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(any()))
+                .thenReturn(Optional.of(owner));
 
-                when(fileGateway.findByFolder(any()))
-                                .thenReturn(List.of());
+        when(fileGateway.findByFolder(any()))
+                .thenReturn(List.of());
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.of(folder));
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.of(folder));
 
-                when(storageService.store(any(), any()))
-                                .then(returnsFirstArg());
+        when(storageService.store(any(), any()))
+                .then(returnsFirstArg());
 
-                when(fileGateway.create(any()))
-                                .thenAnswer(returnsFirstArg());
+        when(fileGateway.create(any()))
+                .thenAnswer(returnsFirstArg());
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualOuptut = useCase.execute(input);
+        final var actualOuptut = useCase.execute(input);
 
-                assertNotNull(actualOuptut.id());
+        assertNotNull(actualOuptut.id());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(1)).store(any(), any());
-                verify(storageService, times(1)).store(any(), eq(expectedContent));
-                verify(storageService, times(0)).delete(any());
-                verify(fileGateway, times(1)).findByFolder(any());
-                verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
-                verify(fileGateway, times(1)).create(any());
-                verify(fileGateway, times(1)).create(argThat(file -> {
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(1)).store(any(), any());
+        verify(storageService, times(1)).store(any(), eq(expectedContent));
+        verify(storageService, times(0)).delete(any());
+        verify(fileGateway, times(1)).findByFolder(any());
+        verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
+        verify(fileGateway, times(1)).create(any());
+        verify(fileGateway, times(1)).create(argThat(file -> {
 
-                        assertEquals(actualOuptut.id().getValue(), file.getId().getValue());
-                        assertEquals(expectedFileName, file.getName());
-                        assertEquals(expectedContentType, file.getContent().type());
-                        assertNotNull(file.getCreatedAt());
-                        assertNotNull(file.getUpdatedAt());
-                        assertNotNull(file.getContent().location());
-                        assertEquals(file.getCreatedAt(), file.getUpdatedAt());
+            assertEquals(actualOuptut.id().getValue(), file.getId().getValue());
+            assertEquals(expectedFileName, file.getName());
+            assertEquals(expectedContentType, file.getContent().type());
+            assertNotNull(file.getCreatedAt());
+            assertNotNull(file.getUpdatedAt());
+            assertNotNull(file.getContent().location());
+            assertEquals(file.getCreatedAt(), file.getUpdatedAt());
 
-                        return true;
-                }));
+            return true;
+        }));
 
-        }
+    }
 
-        @Test
-        void givenAnInvalidId_whenCallsExecute_thenShouldThrowNotFoundException() {
+    @Test
+    void givenAnInvalidId_whenCallsExecute_thenShouldThrowNotFoundException() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
+        final var folder = Folder.createRoot();
 
-                final var expectedFolderId = folder.getId();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                final var expectedExceptionMessage = "Folder with id '%s' not found"
-                                .formatted(expectedFolderId.getValue());
+        final var expectedExceptionMessage = "Folder with id '%s' not found"
+                .formatted(expectedFolderId.getValue());
 
-                when(memberGateway.findById(any()))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(any()))
+                .thenReturn(Optional.of(owner));
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.empty());
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.empty());
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualException = assertThrows(NotFoundException.class, () -> useCase.execute(input));
+        final var actualException = assertThrows(NotFoundException.class, () -> useCase.execute(input));
 
-                assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals(expectedExceptionMessage, actualException.getMessage());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(0)).store(any(), any());
-                verify(storageService, times(0)).store(any(), eq(expectedContent));
-                verify(storageService, times(0)).delete(any());
-                verify(fileGateway, times(0)).findByFolder(any());
-                verify(fileGateway, times(0)).create(any());
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(0)).store(any(), any());
+        verify(storageService, times(0)).store(any(), eq(expectedContent));
+        verify(storageService, times(0)).delete(any());
+        verify(fileGateway, times(0)).findByFolder(any());
+        verify(fileGateway, times(0)).create(any());
 
-        }
+    }
 
-        @Test
-        void givenAValidParamsWithAlreadyExistingFileNameOnSameFolder_whenCallsExecute_thenShouldThrowValidationException() {
+    @Test
+    void givenAValidParamsWithAlreadyExistingFileNameOnSameFolder_whenCallsExecute_thenShouldThrowValidationException() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
+        final var folder = Folder.createRoot();
 
-                final var expectedFolderId = folder.getId();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                final var fileWithSameName = File.create(ownerId, folder.getId(), expectedFileName,
-                                Content.of("location", "text", 10));
+        final var fileWithSameName = File.create(ownerId, folder.getId(), expectedFileName,
+                Content.of("location", "text", 10));
 
-                final var expectedExceptionMessage = "Could not create Aggregate File";
-                final var expectedErrorMessage = "File with same name already exists on this folder";
+        final var expectedExceptionMessage = "Could not create Aggregate File";
+        final var expectedErrorMessage = "File with same name already exists on this folder";
 
-                when(memberGateway.findById(ownerId))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(ownerId))
+                .thenReturn(Optional.of(owner));
 
-                when(fileGateway.findByFolder(any()))
-                                .thenReturn(List.of(fileWithSameName));
+        when(fileGateway.findByFolder(any()))
+                .thenReturn(List.of(fileWithSameName));
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.of(folder));
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.of(folder));
 
-                when(storageService.store(any(), any()))
-                                .then(returnsFirstArg());
+        when(storageService.store(any(), any()))
+                .then(returnsFirstArg());
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualException = assertThrows(ValidationException.class, () -> useCase.execute(input));
+        final var actualException = assertThrows(ValidationException.class, () -> useCase.execute(input));
 
-                assertEquals(expectedExceptionMessage, actualException.getMessage());
-                assertEquals(expectedErrorMessage, actualException.getErrors().get(0).message());
+        assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals(expectedErrorMessage, actualException.getErrors().get(0).message());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(1)).store(any(), any());
-                verify(storageService, times(1)).store(any(), eq(expectedContent));
-                verify(storageService, times(0)).delete(any());
-                verify(fileGateway, times(1)).findByFolder(any());
-                verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
-                verify(fileGateway, times(0)).create(any());
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(1)).store(any(), any());
+        verify(storageService, times(1)).store(any(), eq(expectedContent));
+        verify(storageService, times(0)).delete(any());
+        verify(fileGateway, times(1)).findByFolder(any());
+        verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
+        verify(fileGateway, times(0)).create(any());
 
-        }
+    }
 
-        @Test
-        void givenAValidParams_whenCallsExecuteAndFileGatewayCreateThrowsRandomException_thenShouldThrowInternalErrorException() {
+    @Test
+    void givenAValidParams_whenCallsExecuteAndFileGatewayCreateThrowsRandomException_thenShouldThrowInternalErrorException() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
-                final var expectedFolderId = folder.getId();
+        final var folder = Folder.createRoot();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                final var expectedExceptionMessage = "Could not store File";
+        final var expectedExceptionMessage = "Could not store File";
 
-                when(memberGateway.findById(ownerId))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(ownerId))
+                .thenReturn(Optional.of(owner));
 
-                when(fileGateway.findByFolder(any()))
-                                .thenReturn(List.of());
+        when(fileGateway.findByFolder(any()))
+                .thenReturn(List.of());
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.of(folder));
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.of(folder));
 
-                when(storageService.store(any(), any()))
-                                .then(returnsFirstArg());
+        when(storageService.store(any(), any()))
+                .then(returnsFirstArg());
 
-                when(fileGateway.create(any()))
-                                .thenThrow(new IllegalStateException("FileGateway Exception"));
+        when(fileGateway.create(any()))
+                .thenThrow(new IllegalStateException("FileGateway Exception"));
 
-                doNothing()
-                                .when(storageService)
-                                .delete(any());
+        doNothing()
+                .when(storageService)
+                .delete(any());
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
+        final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
 
-                assertEquals(expectedExceptionMessage, actualException.getMessage());
-                assertEquals("FileGateway Exception", actualException.getCause().getMessage());
+        assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals("FileGateway Exception", actualException.getCause().getMessage());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(1)).store(any(), any());
-                verify(storageService, times(1)).store(any(), eq(expectedContent));
-                verify(storageService, times(1)).delete(any());
-                verify(fileGateway, times(1)).findByFolder(any());
-                verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
-                verify(fileGateway, times(1)).create(any());
-                verify(fileGateway, times(1)).create(argThat(file -> {
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(1)).store(any(), any());
+        verify(storageService, times(1)).store(any(), eq(expectedContent));
+        verify(storageService, times(1)).delete(any());
+        verify(fileGateway, times(1)).findByFolder(any());
+        verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
+        verify(fileGateway, times(1)).create(any());
+        verify(fileGateway, times(1)).create(argThat(file -> {
 
-                        assertNotNull(file.getId().getValue());
-                        assertEquals(expectedFileName, file.getName());
-                        assertEquals(expectedContentType, file.getContent().type());
-                        assertNotNull(file.getCreatedAt());
-                        assertNotNull(file.getUpdatedAt());
-                        assertNotNull(file.getContent().location());
-                        assertEquals(file.getCreatedAt(), file.getUpdatedAt());
+            assertNotNull(file.getId().getValue());
+            assertEquals(expectedFileName, file.getName());
+            assertEquals(expectedContentType, file.getContent().type());
+            assertNotNull(file.getCreatedAt());
+            assertNotNull(file.getUpdatedAt());
+            assertNotNull(file.getContent().location());
+            assertEquals(file.getCreatedAt(), file.getUpdatedAt());
 
-                        return true;
-                }));
+            return true;
+        }));
 
-        }
+    }
 
-        @Test
-        void givenAValidParams_whenCallsExecuteAndFileGatewayCreateAndContentGatewayDeleteThrowsRandomException_thenShouldThrowInternalErrorException() {
+    @Test
+    void givenAValidParams_whenCallsExecuteAndFileGatewayCreateAndContentGatewayDeleteThrowsRandomException_thenShouldThrowInternalErrorException() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
-                final var expectedFolderId = folder.getId();
+        final var folder = Folder.createRoot();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                final var expectedExceptionMessage = "Could not delete BinaryContent";
+        final var expectedExceptionMessage = "Could not delete BinaryContent";
 
-                when(memberGateway.findById(ownerId))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(ownerId))
+                .thenReturn(Optional.of(owner));
 
-                when(fileGateway.findByFolder(any()))
-                                .thenReturn(List.of());
+        when(fileGateway.findByFolder(any()))
+                .thenReturn(List.of());
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.of(folder));
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.of(folder));
 
-                when(storageService.store(any(), any()))
-                                .then(returnsFirstArg());
+        when(storageService.store(any(), any()))
+                .then(returnsFirstArg());
 
-                when(fileGateway.create(any()))
-                                .thenThrow(new IllegalStateException("FileGateway Exception"));
+        when(fileGateway.create(any()))
+                .thenThrow(new IllegalStateException("FileGateway Exception"));
 
-                doThrow(new IllegalStateException("ContentGateway Exception"))
-                                .when(storageService)
-                                .delete(any());
+        doThrow(new IllegalStateException("ContentGateway Exception"))
+                .when(storageService)
+                .delete(any());
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
+        final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
 
-                assertEquals(expectedExceptionMessage, actualException.getMessage());
-                assertEquals("ContentGateway Exception", actualException.getCause().getMessage());
+        assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals("ContentGateway Exception", actualException.getCause().getMessage());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(1)).store(any(), any());
-                verify(storageService, times(1)).store(any(), eq(expectedContent));
-                verify(storageService, times(1)).delete(any());
-                verify(fileGateway, times(1)).findByFolder(any());
-                verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
-                verify(fileGateway, times(1)).create(any());
-                verify(fileGateway, times(1)).create(argThat(file -> {
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(1)).store(any(), any());
+        verify(storageService, times(1)).store(any(), eq(expectedContent));
+        verify(storageService, times(1)).delete(any());
+        verify(fileGateway, times(1)).findByFolder(any());
+        verify(fileGateway, times(1)).findByFolder(eq(folder.getId()));
+        verify(fileGateway, times(1)).create(any());
+        verify(fileGateway, times(1)).create(argThat(file -> {
 
-                        assertNotNull(file.getId().getValue());
-                        assertEquals(expectedFileName, file.getName());
-                        assertEquals(expectedContentType, file.getContent().type());
-                        assertNotNull(file.getCreatedAt());
-                        assertNotNull(file.getUpdatedAt());
-                        assertNotNull(file.getContent().location());
-                        assertEquals(file.getCreatedAt(), file.getUpdatedAt());
+            assertNotNull(file.getId().getValue());
+            assertEquals(expectedFileName, file.getName());
+            assertEquals(expectedContentType, file.getContent().type());
+            assertNotNull(file.getCreatedAt());
+            assertNotNull(file.getUpdatedAt());
+            assertNotNull(file.getContent().location());
+            assertEquals(file.getCreatedAt(), file.getUpdatedAt());
 
-                        return true;
-                }));
+            return true;
+        }));
 
-        }
+    }
 
-        @Test
-        void givenAValidParams_whenCallsExecuteAndContentGatewayStoreThrowsRandomException_thenShouldThrowInternalErrorException() {
+    @Test
+    void givenAValidParams_whenCallsExecuteAndContentGatewayStoreThrowsRandomException_thenShouldThrowInternalErrorException() {
 
-                final var owner = Member.create(MemberID.of("owner"))
-                                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
-                                .approveQuotaRequest();
+        final var owner = Member.create(MemberID.of("owner"))
+                .requestQuota(Quota.of(1, QuotaUnit.GIGABYTE))
+                .approveQuotaRequest();
 
-                final var ownerId = owner.getId();
+        final var ownerId = owner.getId();
 
-                final var folder = Folder.createRoot();
-                final var expectedFolderId = folder.getId();
+        final var folder = Folder.createRoot();
+        final var expectedFolderId = folder.getId();
 
-                final var expectedFileName = FileName.of("file");
-                final var expectedContentType = "image/jpeg";
-                final var contentBytes = "content".getBytes();
+        final var expectedFileName = FileName.of("file");
+        final var expectedContentType = "image/jpeg";
+        final var contentBytes = "content".getBytes();
 
-                final var expectedContent = new ByteArrayInputStream(contentBytes);
-                final var expectedContentSize = (long) contentBytes.length;
+        final var expectedContent = new ByteArrayInputStream(contentBytes);
+        final var expectedContentSize = (long) contentBytes.length;
 
-                final var expectedExceptionMessage = "Could not store BinaryContent";
+        final var expectedExceptionMessage = "Could not store BinaryContent";
 
-                when(memberGateway.findById(ownerId))
-                                .thenReturn(Optional.of(owner));
+        when(memberGateway.findById(ownerId))
+                .thenReturn(Optional.of(owner));
 
-                when(folderGateway.findById(any()))
-                                .thenReturn(Optional.of(folder));
+        when(folderGateway.findById(any()))
+                .thenReturn(Optional.of(folder));
 
-                when(storageService.store(any(), any()))
-                                .thenThrow(new IllegalStateException("ContentGateway Exception"));
+        when(storageService.store(any(), any()))
+                .thenThrow(new IllegalStateException("ContentGateway Exception"));
 
-                final var input = CreateFileInput.of(
-                                ownerId.getValue(),
-                                expectedFolderId.getValue(),
-                                expectedFileName.value(),
-                                expectedContentType,
-                                expectedContent,
-                                expectedContentSize);
+        final var input = CreateFileInput.of(
+                ownerId.getValue(),
+                expectedFolderId.getValue(),
+                expectedFileName.value(),
+                expectedContentType,
+                expectedContent,
+                expectedContentSize);
 
-                final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
+        final var actualException = assertThrows(InternalErrorException.class, () -> useCase.execute(input));
 
-                assertEquals(expectedExceptionMessage, actualException.getMessage());
-                assertEquals("ContentGateway Exception", actualException.getCause().getMessage());
+        assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals("ContentGateway Exception", actualException.getCause().getMessage());
 
-                verify(folderGateway, times(1)).findById(any());
-                verify(folderGateway, times(1)).findById(eq(expectedFolderId));
-                verify(storageService, times(1)).store(any(), any());
-                verify(storageService, times(1)).store(any(), eq(expectedContent));
-                verify(storageService, times(0)).delete(any());
-                verify(fileGateway, times(0)).findByFolder(any());
-                verify(fileGateway, times(0)).create(any());
+        verify(folderGateway, times(1)).findById(any());
+        verify(folderGateway, times(1)).findById(eq(expectedFolderId));
+        verify(storageService, times(1)).store(any(), any());
+        verify(storageService, times(1)).store(any(), eq(expectedContent));
+        verify(storageService, times(0)).delete(any());
+        verify(fileGateway, times(0)).findByFolder(any());
+        verify(fileGateway, times(0)).create(any());
 
-        }
+    }
 
 }

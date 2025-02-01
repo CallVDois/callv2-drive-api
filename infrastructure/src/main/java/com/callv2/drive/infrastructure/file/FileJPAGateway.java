@@ -33,7 +33,17 @@ public class FileJPAGateway implements FileGateway {
 
     @Override
     public File create(File file) {
-        return fileRepository.save(FileJpaEntity.from(file)).toDomain();
+        return save(file);
+    }
+
+    @Override
+    public void delete(FileID id) {
+        this.fileRepository.deleteById(id.getValue());
+    }
+
+    @Override
+    public File update(File file) {
+        return save(file);
     }
 
     @Override
@@ -79,6 +89,10 @@ public class FileJPAGateway implements FileGateway {
                 .stream()
                 .map(FileJpaEntity::toDomain)
                 .toList();
+    }
+
+    private File save(File file) {
+        return fileRepository.save(FileJpaEntity.from(file)).toDomain();
     }
 
 }

@@ -21,6 +21,9 @@ public class File extends AggregateRoot<FileID> {
     private Instant createdAt;
     private Instant updatedAt;
 
+    private boolean deleted;
+    private Instant deletedAt;
+
     private File(
             final FileID anId,
             final MemberID owner,
@@ -28,7 +31,9 @@ public class File extends AggregateRoot<FileID> {
             final FileName name,
             final Content content,
             final Instant createdAt,
-            final Instant updatedAt) {
+            final Instant updatedAt,
+            final boolean deleted,
+            final Instant deletedAt) {
         super(anId);
 
         this.folder = folder;
@@ -53,8 +58,10 @@ public class File extends AggregateRoot<FileID> {
             final FileName name,
             final Content content,
             final Instant createdAt,
-            final Instant updatedAt) {
-        return new File(id, owner, folder, name, content, createdAt, updatedAt);
+            final Instant updatedAt,
+            final boolean deleted,
+            final Instant deletedAt) {
+        return new File(id, owner, folder, name, content, createdAt, updatedAt, deleted, deletedAt);
     }
 
     public static File with(final File file) {
@@ -65,7 +72,9 @@ public class File extends AggregateRoot<FileID> {
                 file.getName(),
                 file.getContent(),
                 file.getCreatedAt(),
-                file.getUpdatedAt());
+                file.getUpdatedAt(),
+                file.isDeleted(),
+                file.getDeletedAt());
     }
 
     public static File create(
@@ -83,7 +92,9 @@ public class File extends AggregateRoot<FileID> {
                 name,
                 content,
                 now,
-                now);
+                now,
+                false,
+                null);
     }
 
     public File update(
@@ -102,6 +113,24 @@ public class File extends AggregateRoot<FileID> {
 
         selfValidate();
         return this;
+    }
+
+    public File delete() {
+        if (this.deleted)
+            return this;
+
+        this.deleted = true;
+        this.deletedAt = Instant.now();
+
+        return this;
+    }
+
+    private void selfValidate() {
+        final var notification = Notification.create();
+        validate(notification);
+
+        if (notification.hasError())
+            throw ValidationException.with("Validation fail has occoured", notification);
     }
 
     public MemberID getOwner() {
@@ -128,12 +157,12 @@ public class File extends AggregateRoot<FileID> {
         return updatedAt;
     }
 
-    private void selfValidate() {
-        final var notification = Notification.create();
-        validate(notification);
+    public boolean isDeleted() {
+        return deleted;
+    }
 
-        if (notification.hasError())
-            throw ValidationException.with("Validation fail has occoured", notification);
+    public Instant getDeletedAt() {
+        return deletedAt;
     }
 
 }

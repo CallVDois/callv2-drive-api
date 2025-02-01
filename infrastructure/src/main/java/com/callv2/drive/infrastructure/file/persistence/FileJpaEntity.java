@@ -46,6 +46,12 @@ public class FileJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "deleted")
+    private boolean deleted;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     private FileJpaEntity(
             final UUID id,
             final String ownerId,
@@ -55,7 +61,9 @@ public class FileJpaEntity {
             final String contentLocation,
             final Long contentSize,
             final Instant createdAt,
-            final Instant updatedAt) {
+            final Instant updatedAt,
+            final boolean deleted,
+            final Instant deletedAt) {
         this.id = id;
         this.ownerId = ownerId;
         this.folderId = folderId;
@@ -65,6 +73,8 @@ public class FileJpaEntity {
         this.contentSize = contentSize;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.deleted = deleted;
+        this.deletedAt = deletedAt;
     }
 
     public FileJpaEntity() {
@@ -80,7 +90,9 @@ public class FileJpaEntity {
                 file.getContent().location(),
                 file.getContent().size(),
                 file.getCreatedAt(),
-                file.getUpdatedAt());
+                file.getUpdatedAt(),
+                file.isDeleted(),
+                file.getDeletedAt());
     }
 
     public File toDomain() {
@@ -91,7 +103,9 @@ public class FileJpaEntity {
                 FileName.of(getName()),
                 Content.of(getContentLocation(), getContentType(), getContentSize()),
                 getCreatedAt(),
-                getUpdatedAt());
+                getUpdatedAt(),
+                isDeleted(),
+                getDeletedAt());
     }
 
     public UUID getId() {
@@ -164,6 +178,22 @@ public class FileJpaEntity {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
 }
